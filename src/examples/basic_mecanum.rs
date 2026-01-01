@@ -2,10 +2,8 @@ use std::sync::atomic::Ordering;
 use std::time::Instant;
 use blaze_ftc::control::gamepad::Gamepad;
 use blaze_ftc::control::hardware::Direction;
-use blaze_ftc::control::MotorPIDF::MotorPIDF;
 use blaze_ftc::control::robot::{GamepadHandler, Robot};
 use blaze_ftc::threads::send::SEND_SATURATION;
-use crate::examples::mecanum_with_brake_pid_mode::{ControlMode, MBPStateUpdate, MBPTarget};
 
 pub fn robot_init_mecanum(robot: &mut Robot<MTarget, MStateUpdate>) -> MTarget {
     //this is how you log. info and above are logged, trace is reserved for debugging serialization
@@ -35,11 +33,13 @@ pub struct SimpleMecanumGamepadHandler {
     last_ran: Instant
 }
 impl GamepadHandler<MTarget, MStateUpdate> for SimpleMecanumGamepadHandler {
-    fn update(&mut self, robot: &Robot<MTarget, MStateUpdate>, gp0: &Gamepad, gp2: &Gamepad) {
+    fn update(&mut self, robot: &Robot<MTarget, MStateUpdate>, gp0: &Gamepad, gp1: &Gamepad) {
         let s = 0.7;
         let y = -gp0.left_stick_y;
         let x = gp0.left_stick_x;
         let turn = gp0.right_stick_x;
+        robot.telemetry.add_f64("mecanum x: ", x as f64);
+        robot.telemetry.add_f64("mecanum y: ", y as f64);
         //note, you will have to change the motors yourself. eventually i will make this
         //more configurable in the init function, but for now only directions are
         robot.hub_0.send_motor_command(0, (y + x + turn) * s);

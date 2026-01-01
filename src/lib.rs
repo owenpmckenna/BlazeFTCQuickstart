@@ -1,7 +1,5 @@
 mod examples;
 
-use std::iter::Map;
-use std::slice::Iter;
 use std::sync::atomic::{AtomicBool, Ordering};
 use blaze_ftc::control::gamepad::Gamepad;
 use blaze_ftc::control::hardware::{Direction, LynxHub};
@@ -15,6 +13,7 @@ use jni::sys::jint;
 use crate::examples::auto_pids::robot_init_auto;
 use crate::examples::basic_mecanum::robot_init_mecanum;
 use crate::examples::mecanum_with_brake_pid_mode::robot_init_modes;
+use crate::examples::neutrino_proxy::robot_init_neutrino;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn JNI_OnLoad(vm: jni::JavaVM, _: *mut std::ffi::c_void) -> jint {
@@ -28,9 +27,10 @@ gp_receiver: Receiver<(Vec<u8>, Vec<u8>)>, telemetry: Telemetry, running: &'stat
     log::info!("initfunc ran! to_run:{}", to_run);
     //this is the function called when an opmode is actually started. to_run is passed through from the opmode config object
     match to_run {
-        0 => Robot::new(mods, packet_in, packet_out, gp_receiver, telemetry, robot_init_mecanum, running).init(),
-        1 => Robot::new(mods, packet_in, packet_out, gp_receiver, telemetry, robot_init_modes, running).init(),
-        2 => Robot::new(mods, packet_in, packet_out, gp_receiver, telemetry, robot_init_auto, running).init(),
+        0 => Robot::new(mods, packet_in, packet_out, gp_receiver, telemetry, robot_init_neutrino, running).init(),
+        1 => Robot::new(mods, packet_in, packet_out, gp_receiver, telemetry, robot_init_mecanum, running).init(),
+        2 => Robot::new(mods, packet_in, packet_out, gp_receiver, telemetry, robot_init_modes, running).init(),
+        3 => Robot::new(mods, packet_in, packet_out, gp_receiver, telemetry, robot_init_auto, running).init(),
         _ => {
             run_bare(mods.into_iter().map(|it| LynxHub::new(it, &packet_out)).collect(),
                      packet_in, packet_out, gp_receiver, telemetry, running, to_run);

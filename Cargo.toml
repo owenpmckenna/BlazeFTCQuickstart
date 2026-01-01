@@ -7,7 +7,7 @@ edition = "2024"
 jni = "0.21.1"
 #blaze_ftc = { version = "0.1.0", path = "../blaze_ftc" }
 #eventually we should do this better, but for now I'm pinning it to a commit
-blaze_ftc = { version = "0.1.0", git = "https://github.com/owenpmckenna/blaze_ftc", rev = "34f4e0b" }
+blaze_ftc = { version = "0.1.0", git = "https://github.com/owenpmckenna/blaze_ftc", rev = "d389b8f" }
 log = "0.4.29"
 
 [lib]

@@ -1,5 +1,5 @@
 use std::sync::atomic::Ordering;
-use std::thread::{sleep, Thread};
+use std::thread::sleep;
 use std::time::{Duration, Instant};
 use blaze_ftc::control::hardware::Direction;
 use blaze_ftc::control::MotorPIDF::MotorPIDF;
@@ -7,7 +7,6 @@ use blaze_ftc::control::robot::{BulkReadHandler, MainThread, Robot};
 use blaze_ftc::serialization::lynx_commands::lynx_commands::LynxGetBulkDataResponseData;
 use blaze_ftc::threads::send::SEND_SATURATION;
 use crate::examples::auto_pids::MotorStatusUpdate::*;
-use crate::examples::basic_mecanum::MStateUpdate;
 
 pub fn robot_init_auto(robot: &mut Robot<MotorTargets, MotorStatusUpdate>) -> MotorTargets {
     log::info!("initing!");
