@@ -5,7 +5,7 @@ use blaze_ftc::control::hardware::Direction;
 use blaze_ftc::control::robot::{GamepadHandler, Robot};
 use blaze_ftc::threads::send::SEND_SATURATION;
 
-pub fn robot_init_mecanum(robot: &mut Robot<MTarget, MStateUpdate>) -> MTarget {
+pub fn robot_init_mecanum(robot: &mut Robot) {
     //this is how you log. info and above are logged, trace is reserved for debugging serialization
     //and internals
     log::info!("initing!");
@@ -17,23 +17,14 @@ pub fn robot_init_mecanum(robot: &mut Robot<MTarget, MStateUpdate>) -> MTarget {
     //this function is backed by a list, so send as many and as many types as you want.
     //for instance, you might want to reuse the saturation/looptime logger.
     robot.add_gp_handler(SimpleMecanumGamepadHandler {last_ran: Instant::now()});
-    //you have to return the initial target.
-    MTarget {}
 }
-
-//placeholder
-#[derive(Clone, PartialEq, Debug)]
-pub struct MTarget {}
-//also placeholder! We don't have any state to store
-#[derive(PartialEq, Clone, Debug)]
-pub enum MStateUpdate {}
 
 pub struct SimpleMecanumGamepadHandler {
     /*if we to store state for this handler, this is where you put it*/
     last_ran: Instant
 }
-impl GamepadHandler<MTarget, MStateUpdate> for SimpleMecanumGamepadHandler {
-    fn update(&mut self, robot: &Robot<MTarget, MStateUpdate>, gp0: &Gamepad, gp1: &Gamepad) {
+impl GamepadHandler for SimpleMecanumGamepadHandler {
+    fn update(&mut self, robot: &Robot, gp0: &Gamepad, gp1: &Gamepad) {
         let s = 0.7;
         let y = -gp0.left_stick_y;
         let x = gp0.left_stick_x;
@@ -47,9 +38,19 @@ impl GamepadHandler<MTarget, MStateUpdate> for SimpleMecanumGamepadHandler {
         robot.hub_0.send_motor_command(2, (y - x + turn) * s);
         robot.hub_0.send_motor_command(3, (y + x - turn) * s);
 
+        if let Some(hub) = robot.hub_1 {
+            if gp0.a {
+                hub.send_motor_command(0, 0.25);
+            } else {
+                hub.send_motor_command(0, 0.0);
+            }
+        }
+
         //not strictly needed, but we might as well log write saturation and loop times.
         //note that gamepad looptimes are determined by how fast java gives us new gamepads,
-        //which is artificially slow because otherwise we saturate the UART line.
+        //which is artificially slow because otherwise we may accidentally saturate the UART line,
+        //and having gamepad inputs delayed by 5 more ms is fine (sdk already delays it by like 30 ms
+        //or something).
         let saturation = f64::from_bits(SEND_SATURATION.load(Ordering::SeqCst));
         let modded = saturation * 100.0;
         robot.telemetry.add_f64("write saturation", modded);

@@ -1,10 +1,22 @@
 # Blaze FTC Quickstart
 The repository for BlazeFTC can be found [here](https://github.com/owenpmckenna/blaze_ftc). It has all the relevant information on what exactly this is, so read its readme before you start here.
 
+### A note on Neutrino:
+
+BlazeFTC was initially conceived purely as a new way to write OpModes in Rust. However, given the constraint that BlazeFTC must run inside an OpMode to be used in competition, a "proxy" had to be written to allow the FTC SDK to continue communicating with the real hardware.
+To be specific, we replace the SDK's Input/Output streams with ones backed by JNI calls to Rust code which deserialize, reserialize, and send on packets intended for hardware. During normal operation, this is 100% transparent and things like KeepAlives can reach hardware just fine.
+
+While it was annoying to implement, this affords a unique opportunity. "Neutrino" is a BlazeFTC OpMode, contained by default in the `dev.anygeneric:blazeftc` package, which intercepts set power, set position, and i2c write commands and forwards them on to real hardware. It simultaneously generates a fake acknowledgement packet and makes it available to the FTC SDK as if it came from real hardware.
+
+We do not mutate write data with this method of operation, and if something actually fails, the next read (eg. bulk read) will hang, stopping the OpMode. The end effect of this is that motor, servo, and i2c writes (1/2 of i2c's overhead) now take a negligible amount of time. This can take OpModes from 30-40hz (2 bulk reads, i2c write + read, 8 motors = ~26 ms in absolute best case), to closer to 150 hz (2 bulk reads, 1 packet for i2c) in a standard configuration.
+
+To enable this and speed up your opmode by 4x or more (without any Rust knowledge), follow steps 1, and 10-12 below.
+
+### Setup instructions:
+
 To get started, you will need to:
 1. add `implementation("dev.anygeneric:blazeftc:0.1.2")` to your gradle dependencies
 
-(steps 2-9 may be skipped if all you care about if the Neutrino Proxy)
 2. add this code block to the `android {}` section of your :TeamCode build.gradle.
 ```
 sourceSets {
@@ -14,7 +26,7 @@ sourceSets {
 }
 ```
 3. create the folder: `%projectroot%/TeamCode/src/main/jniLibs`. Studio makes this kinda difficult, so I'd just open up the terminal and run `mkdir TeamCode/src/main/jniLibs` from your project's root directory.
-4. clone this repository in your environment of choice! If you're considering using this repo, I think you can probably figure this one out.
+4. clone this repository in your environment of choice! Most are going to be using RustRover.
 5. set the build script to the correct target. go to build.sh (no I cannot test this on windows, the command should be the same) and replace the target output directory with yours. (this is easiest to get by right-clicking the jniLibs folder and selecting Copy Absolute Path or Reference).
 6. Download cargo ndk! Run `cargo install cargo-ndk` and `rustup target add aarch64-linux-android armv7-linux-androideabi` if you haven't done this before.
 7. Read the examples! Seriously. A high level overview is in the main repo but the Robot framework is kind of wierd and reading these will be very helpful.
