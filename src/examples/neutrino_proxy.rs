@@ -4,6 +4,7 @@ use std::sync::OnceLock;
 use std::time::{Instant, SystemTime};
 use blaze_ftc::control::gamepad::Gamepad;
 use blaze_ftc::control::hardware::{LynxHub, DO_MOTOR_CACHING, MOTOR_CACHING_THRESHOLD};
+use blaze_ftc::control::java_closure_system::JNICrossPinpointHandler;
 use blaze_ftc::control::robot::{BulkReadHandler, GamepadHandler, MainThread, Robot, SdkPacketHandler, ThreadSafe};
 use blaze_ftc::crossbeam_channel::Sender;
 use blaze_ftc::sdk_proxy::proxy::TIMING_TRACKER;
@@ -32,6 +33,7 @@ pub fn robot_init_neutrino(robot: &mut Robot) {
         MotorAckProxyInterceptor {}
     );
     robot.add_update_processor(process_update);
+    JNICrossPinpointHandler::put_on_robot(robot);
     //if you want to do performance testing, enable the neutrino gp handler
     //by uncommenting the next line. It lets you enable and disable some stuff at runtime
     // robot.add_gp_handler(NeutrinoGamepadHandler {});
